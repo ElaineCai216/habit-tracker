@@ -14,6 +14,7 @@
 ## 使用
 
 直接双击 `index.html` 打开即可。数据只保存在当前浏览器中。
+网址：https://elainecai216.github.io/habit-tracker/
 
 ## 技术
 
