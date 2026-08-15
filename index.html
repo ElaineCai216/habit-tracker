@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>习惯打卡 · Habit</title>
+<style>
+  :root{
+    --cream:#efe9dc;
+    --paper:#fdfaf3;
+    --amber:#e0a040;
+    --orange:#e06020;
+    --brick:#c0562e;
+    --pink:#d76f92;
+    --teal:#3e8e7b;
+    --navy:#2f3a52;
+    --ink:#3a3226;
+    --muted:#8d8474;
+    --gray:#a49b8a;
+    --line:rgba(88,74,48,.14);
+    --serif:"Songti SC","STSong","Noto Serif SC",Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans);
+    color:var(--ink);
+    background:
+      radial-gradient(1100px 760px at 88% -12%, rgba(224,160,64,.20), transparent 62%),
+      radial-gradient(900px 700px at -12% 112%, rgba(62,142,123,.18), transparent 60%),
+      radial-gradient(760px 560px at 112% 88%, rgba(215,111,146,.16), transparent 56%),
+      var(--cream);
+    min-height:100%;
+    -webkit-font-smoothing:antialiased;
+  }
+  .blob{position:fixed;border-radius:50%;filter:blur(64px);z-index:0;pointer-events:none}
+  .blob.b1{width:360px;height:360px;background:rgba(224,160,64,.30);top:-140px;right:-120px}
+  .blob.b2{width:320px;height:320px;background:rgba(62,142,123,.22);bottom:-130px;left:-120px}
+  .blob.b3{width:240px;height:240px;background:rgba(215,111,146,.20);top:42%;left:58%}
+  .noise{
+    position:fixed;inset:0;pointer-events:none;opacity:.045;z-index:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .wrap{position:relative;z-index:1;max-width:660px;margin:0 auto;padding:44px 20px 90px}
+
+  /* Hero */
+  .hero{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:6px 0 30px}
+  .hero-copy{min-width:0}
+  .eyebrow{font-size:11px;letter-spacing:.38em;color:var(--brick);font-weight:700;text-transform:uppercase}
+  .hero h1{font-family:var(--serif);font-size:44px;line-height:1.12;margin:8px 0 4px}
+  .hero-date{color:var(--muted);font-size:14px}
+  .streak{
+    display:inline-flex;align-items:center;gap:7px;margin-top:16px;padding:7px 14px;
+    border-radius:999px;background:rgba(224,160,64,.16);border:1px solid rgba(224,160,64,.38);
+    color:#8a5a13;font-weight:700;font-size:13px;
+  }
+  .streak .flame{font-size:15px;line-height:1}
+  .hero-art{flex:none;width:132px;height:132px;overflow:visible}
+
+  /* Cards */
+  .card{
+    background:rgba(253,250,243,.86);
+    border:1px solid var(--line);
+    border-radius:26px;
+    box-shadow:0 12px 34px rgba(70,55,30,.09);
+    padding:24px;
+    margin-bottom:18px;
+  }
+  .card-title{font-family:var(--serif);font-size:20px;margin-bottom:14px}
+
+  /* Progress */
+  .progress-card{display:flex;align-items:center;gap:22px}
+  .ring-wrap{position:relative;width:112px;height:112px;flex:none}
+  .ring-svg{width:112px;height:112px;transform:rotate(-90deg)}
+  .ring-track{fill:none;stroke:rgba(88,74,48,.12);stroke-width:10}
+  .ring-fill{fill:none;stroke:var(--amber);stroke-width:10;stroke-linecap:round;transition:stroke-dashoffset .45s ease}
+  .ring-text{position:absolute;inset:0;display:flex;align-items:baseline;justify-content:center;gap:2px;top:44px}
+  .ring-text b{font-family:var(--serif);font-size:30px;font-weight:700}
+  .ring-text span{font-size:14px;color:var(--muted)}
+  .progress-copy{flex:1;min-width:0}
+  .progress-title{font-size:13px;color:var(--muted);font-weight:600}
+  .progress-sub{font-family:var(--serif);font-size:26px;margin:2px 0 10px}
+  .bar{height:8px;border-radius:999px;background:rgba(88,74,48,.12);overflow:hidden}
+  .bar-fill{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--amber),var(--orange));transition:width .45s ease}
+  .back-today{
+    display:inline-flex;align-items:center;gap:4px;margin-top:12px;padding:6px 12px;border:none;
+    border-radius:999px;background:rgba(62,142,123,.16);color:#27584c;font:inherit;font-size:13px;font-weight:700;cursor:pointer
+  }
+  .back-today:hover{background:rgba(62,142,123,.26)}
+
+  /* List */
+  .list-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .list-sub{font-size:12px;color:var(--muted);margin:-8px 0 10px}
+  .add-btn{
+    display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border:none;border-radius:999px;
+    background:var(--brick);color:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer;
+    box-shadow:0 4px 12px rgba(192,86,46,.30);transition:transform .12s,box-shadow .12s
+  }
+  .add-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(192,86,46,.36)}
+  .habit-list{list-style:none}
+  .habit{
+    display:flex;align-items:center;gap:14px;padding:14px 10px;border-bottom:1px solid var(--line);
+    border-radius:14px;cursor:pointer;transition:background .15s
+  }
+  .habit:last-child{border-bottom:none}
+  .habit:hover{background:rgba(224,160,64,.08)}
+  .habit-emoji{font-size:26px;width:38px;text-align:center;flex:none;transition:filter .25s,opacity .25s,transform .25s}
+  .habit-name{flex:1;font-size:17px;font-weight:500;transition:color .25s}
+  .check{
+    width:32px;height:32px;border-radius:50%;border:2.5px solid var(--amber);position:relative;flex:none;
+    transition:background .25s,border-color .25s,transform .15s
+  }
+  .habit:active .check{transform:scale(.92)}
+  .check svg{position:absolute;inset:0;margin:auto;opacity:0;transition:opacity .2s}
+  .check.on{background:var(--amber);border-color:var(--amber)}
+  .check.on svg{opacity:1}
+  .habit.done .habit-name{color:var(--gray);text-decoration:line-through;text-decoration-color:rgba(164,155,138,.65)}
+  .habit.done .habit-emoji{filter:grayscale(1) opacity(.55)}
+  .row-actions{display:flex;gap:2px;opacity:0;transition:opacity .15s}
+  .habit:hover .row-actions,.row-actions:focus-within{opacity:1}
+  .icon-btn{
+    width:32px;height:32px;border:none;background:transparent;color:var(--muted);border-radius:9px;cursor:pointer;
+    font-size:15px;display:grid;place-items:center;transition:background .15s,color .15s
+  }
+  .icon-btn:hover{background:rgba(88,74,48,.12);color:var(--ink)}
+  .icon-btn.danger:hover{color:var(--brick);background:rgba(192,86,46,.10)}
+  .empty{text-align:center;color:var(--muted);padding:34px 10px;font-size:14px;line-height:1.8}
+  .empty b{color:var(--brick)}
+
+  /* History */
+  .history-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .day{
+    display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 4px;border-radius:16px;
+    border:1px solid var(--line);background:rgba(255,255,255,.45);cursor:pointer;font:inherit;color:var(--ink);
+    transition:transform .15s,border-color .15s,box-shadow .15s,background .15s
+  }
+  .day:hover{border-color:var(--amber);transform:translateY(-2px)}
+  .day.active{border-color:var(--amber);background:rgba(224,160,64,.15);box-shadow:0 0 0 1px var(--amber)}
+  .day-week{font-size:11px;color:var(--muted);font-weight:600}
+  .day.today .day-week{color:var(--brick)}
+  .day-num{font-family:var(--serif);font-size:21px;font-weight:700;line-height:1}
+  .day-count{
+    min-width:22px;height:22px;padding:0 5px;border-radius:999px;display:grid;place-items:center;
+    font-size:11px;font-weight:700;background:rgba(88,74,48,.09);color:var(--muted)
+  }
+  .day-count.on{background:rgba(224,160,64,.24);color:#8a5a13}
+  .day-count.all{background:var(--teal);color:#fff}
+
+  .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:26px;line-height:1.8}
+
+  /* Modal */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(58,50,38,.38);display:grid;place-items:center;z-index:50;padding:20px;
+    opacity:0;transition:opacity .2s;pointer-events:none
+  }
+  .modal-backdrop.show{opacity:1;pointer-events:auto}
+  .modal{
+    width:100%;max-width:430px;background:var(--paper);border-radius:24px;padding:26px;box-shadow:0 26px 70px rgba(40,30,15,.3);
+    transform:translateY(12px) scale(.98);transition:transform .2s
+  }
+  .modal-backdrop.show .modal{transform:none}
+  .modal h3{font-family:var(--serif);font-size:22px;margin-bottom:18px}
+  .field-label{display:block;font-size:12px;color:var(--muted);font-weight:700;margin:14px 0 6px;letter-spacing:.06em}
+  .text-input{
+    width:100%;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:#fffdf7;
+    font:inherit;font-size:16px;color:var(--ink);outline:none;transition:border-color .15s
+  }
+  .text-input:focus{border-color:var(--amber)}
+  .emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+  .emoji-btn{
+    aspect-ratio:1;border:1.5px solid var(--line);background:#fffdf7;border-radius:11px;font-size:20px;cursor:pointer;
+    display:grid;place-items:center;transition:border-color .12s,background .12s,transform .12s
+  }
+  .emoji-btn:hover{border-color:var(--amber);transform:translateY(-1px)}
+  .emoji-btn.sel{border-color:var(--amber);background:rgba(224,160,64,.18);box-shadow:0 0 0 1px var(--amber)}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+  .btn{border:none;border-radius:999px;padding:10px 20px;font:inherit;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s,transform .12s}
+  .btn.ghost{background:rgba(88,74,48,.10);color:var(--ink)}
+  .btn.ghost:hover{background:rgba(88,74,48,.18)}
+  .btn.primary{background:var(--brick);color:#fff}
+  .btn.primary:hover{transform:translateY(-1px)}
+
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .card,.hero{animation:rise .5s ease both}
+  .list-card{animation-delay:.06s}.history-card{animation-delay:.12s}
+
+  @media (max-width:560px){
+    .wrap{padding:30px 14px 70px}
+    .hero h1{font-size:36px}
+    .hero-art{width:96px;height:96px}
+    .progress-card{gap:16px}
+    .ring-wrap{width:92px;height:92px}
+    .ring-svg{width:92px;height:92px}
+    .ring-text b{font-size:26px}
+    .ring-text{top:36px}
+    .progress-sub{font-size:22px}
+    .row-actions{opacity:.5}
+    .emoji-grid{grid-template-columns:repeat(7,1fr)}
+  }
+</style>
+</head>
+<body>
+  <div class="blob b1" aria-hidden="true"></div>
+  <div class="blob b2" aria-hidden="true"></div>
+  <div class="blob b3" aria-hidden="true"></div>
+  <div class="noise" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Habit · 打卡</p>
+        <h1 id="heroTitle">今天</h1>
+        <p class="hero-date" id="heroDate"></p>
+        <span class="streak" id="streakBadge"><span class="flame">🔥</span><span id="streakText">连续 0 天</span></span>
+      </div>
+      <svg class="hero-art" viewBox="0 0 150 150" aria-hidden="true">
+        <path d="M22 96 C 6 76, 12 50, 34 42 C 58 33, 76 48, 72 70 C 68 92, 40 108, 22 96 Z" fill="var(--teal)" opacity="0.35"/>
+        <circle cx="20" cy="30" r="5" fill="var(--pink)" opacity="0.85"/>
+        <circle cx="34" cy="44" r="3" fill="var(--pink)" opacity="0.55"/>
+        <circle cx="14" cy="44" r="2.5" fill="var(--amber)" opacity="0.8"/>
+        <circle cx="38" cy="96" r="14" fill="none" stroke="var(--navy)" stroke-width="2" opacity="0.45"/>
+        <circle cx="38" cy="96" r="8" fill="none" stroke="var(--navy)" stroke-width="1.4" opacity="0.4"/>
+        <circle cx="96" cy="62" r="33" fill="var(--amber)" opacity="0.92"/>
+        <circle cx="86" cy="52" r="7" fill="rgba(255,255,255,.35)"/>
+        <g stroke="var(--orange)" stroke-width="3.2" stroke-linecap="round">
+          <line x1="96" y1="14" x2="96" y2="26"/>
+          <line x1="144" y1="62" x2="132" y2="62"/>
+          <line x1="48" y1="62" x2="60" y2="62"/>
+          <line x1="96" y1="110" x2="96" y2="98"/>
+          <line x1="130" y1="28" x2="121" y2="37"/>
+          <line x1="62" y1="96" x2="71" y2="87"/>
+          <line x1="62" y1="28" x2="71" y2="37"/>
+          <line x1="130" y1="96" x2="121" y2="87"/>
+        </g>
+        <circle cx="132" cy="128" r="9" fill="var(--orange)" opacity="0.85"/>
+        <circle cx="146" cy="120" r="3.5" fill="var(--teal)" opacity="0.8"/>
+      </svg>
+    </header>
+
+    <section class="card progress-card">
+      <div class="ring-wrap">
+        <svg class="ring-svg" viewBox="0 0 120 120">
+          <circle class="ring-track" cx="60" cy="60" r="52"/>
+          <circle class="ring-fill" cx="60" cy="60" r="52" id="ringFill"/>
+        </svg>
+        <div class="ring-text"><b id="ringNum">0</b><span>/</span><span id="ringDen">0</span></div>
+      </div>
+      <div class="progress-copy">
+        <p class="progress-title" id="progressTitle">今天的进度</p>
+        <p class="progress-sub" id="progressSub">0 项已完成</p>
+        <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+        <button class="back-today" id="backToday" hidden>← 回到今天</button>
+      </div>
+    </section>
+
+    <section class="card list-card">
+      <div class="list-head">
+        <h2 class="card-title" id="listTitle">今日清单</h2>
+        <button class="add-btn" id="addBtn">＋ 添加习惯</button>
+      </div>
+      <p class="list-sub" id="listSub" hidden></p>
+      <ul class="habit-list" id="habitList"></ul>
+      <div class="empty" id="empty" hidden>还没有习惯，点右上角 <b>＋ 添加习惯</b> 添加第一个吧</div>
+    </section>
+
+    <section class="card history-card">
+      <h2 class="card-title">近 7 天</h2>
+      <div class="history-strip" id="historyStrip"></div>
+    </section>
+
+    <footer class="foot">数据保存在本机浏览器 · 双击 index.html 即可使用<br>灵感来自 Bernardo Henning《Quartz》</footer>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">添加习惯</h3>
+      <label class="field-label" for="habitName">习惯名称</label>
+      <input class="text-input" id="habitName" maxlength="20" placeholder="例如：喝水" autocomplete="off">
+      <div class="field-label">选择图标</div>
+      <div class="emoji-grid" id="emojiGrid"></div>
+      <div class="modal-actions">
+        <button class="btn ghost" id="modalCancel">取消</button>
+        <button class="btn primary" id="modalOk">保存</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+  var STORAGE_KEY = "habit-tracker:v1";
+  var EMOJIS = ["💧","🏃","📖","🥗","😴","🧘","✍️","🎨","🎹","💪","🚭","🌱","☀️","🍎","🧠","💊","🪥","🧹","💻","🚶","🧊","🎯","💤","🙏"];
+
+  /* ---------- helpers ---------- */
+  function esc(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function pad(n){ return n < 10 ? "0" + n : "" + n; }
+  function fmtKey(d){ return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()); }
+  function parseKey(k){ var p = k.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+  function addDays(d, n){ var x = new Date(d); x.setDate(x.getDate()+n); return x; }
+  function startOfDay(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  var WEEK = ["周日","周一","周二","周三","周四","周五","周六"];
+  function weekdayCN(d){ return WEEK[d.getDay()]; }
+  function monthDay(d){ return (d.getMonth()+1) + "月" + d.getDate() + "日"; }
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function today(){ return startOfDay(new Date()); }
+
+  /* ---------- state ---------- */
+  var state = load();
+  var viewDate = today();   // 当前查看的日期（默认今天）
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return {habits:[], checkins:{}};
+      var d = JSON.parse(raw);
+      if(!d || typeof d !== "object" || !Array.isArray(d.habits)) return {habits:[], checkins:{}};
+      d.checkins = d.checkins && typeof d.checkins === "object" ? d.checkins : {};
+      return d;
+    }catch(e){ return {habits:[], checkins:{}}; }
+  }
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ console.warn("保存失败：", e); }
+  }
+
+  function doneIds(key){ return state.checkins[key] || []; }
+  function isDone(id, key){ return doneIds(key).indexOf(id) !== -1; }
+  function setDone(id, key, done){
+    var arr = state.checkins[key] || [];
+    var i = arr.indexOf(id);
+    if(done && i === -1) arr.push(id);
+    if(!done && i !== -1) arr.splice(i, 1);
+    if(arr.length) state.checkins[key] = arr; else delete state.checkins[key];
+    save();
+  }
+
+  function computeStreak(){
+    var set = {};
+    for(var k in state.checkins){ if(state.checkins[k].length) set[k] = true; }
+    var n = 0, d = today();
+    if(!set[fmtKey(d)]) d = addDays(d, -1);
+    while(set[fmtKey(d)]){ n++; d = addDays(d, -1); }
+    return n;
+  }
+
+  /* ---------- DOM refs ---------- */
+  var $ = function(id){ return document.getElementById(id); };
+  var heroTitle=$("heroTitle"), heroDate=$("heroDate"), streakText=$("streakText"),
+      ringFill=$("ringFill"), ringNum=$("ringNum"), ringDen=$("ringDen"),
+      progressTitle=$("progressTitle"), progressSub=$("progressSub"), barFill=$("barFill"),
+      backToday=$("backToday"), listTitle=$("listTitle"), listSub=$("listSub"),
+      habitList=$("habitList"), empty=$("empty"), historyStrip=$("historyStrip"),
+      modalBackdrop=$("modalBackdrop"), modalTitle=$("modalTitle"), habitName=$("habitName"),
+      emojiGrid=$("emojiGrid"), modalOk=$("modalOk"), modalCancel=$("modalCancel");
+
+  var RING_R = 52;
+  var RING_C = 2 * Math.PI * RING_R;
+
+  /* ---------- render ---------- */
+  function render(){
+    var key = fmtKey(viewDate);
+    var habits = state.habits;
+    var done = doneIds(key);
+    var isTodayView = fmtKey(today()) === key;
+
+    /* hero */
+    heroTitle.textContent = isTodayView ? "今天" : monthDay(viewDate);
+    heroDate.textContent = monthDay(viewDate) + " · " + weekdayCN(viewDate);
+    var st = computeStreak();
+    streakText.textContent = "连续 " + st + " 天" + (st>0 ? "，继续加油" : "，今天开始吧");
+
+    /* progress */
+    var total = habits.length;
+    var count = habits.filter(function(h){ return done.indexOf(h.id) !== -1; }).length;
+    var ratio = total ? count/total : 0;
+    ringFill.style.strokeDasharray = RING_C;
+    ringFill.style.strokeDashoffset = RING_C * (1 - ratio);
+    ringNum.textContent = count;
+    ringDen.textContent = total;
+    progressTitle.textContent = isTodayView ? "今天的进度" : monthDay(viewDate) + " 的进度";
+    progressSub.textContent = (total ? count + " / " + total + " 项已完成" : "还没有习惯");
+    barFill.style.width = (ratio*100).toFixed(1) + "%";
+    backToday.hidden = isTodayView;
+
+    /* list */
+    listTitle.textContent = isTodayView ? "今日清单" : monthDay(viewDate) + " · 清单";
+    listSub.hidden = isTodayView;
+    listSub.textContent = isTodayView ? "" : "补卡中：点勾可以补记这一天的完成情况";
+    renderList();
+    empty.hidden = habits.length > 0;
+    empty.style.display = habits.length ? "none" : "";
+
+    /* history */
+    renderHistory();
+  }
+
+  function checkSvg(){
+    return '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5 L6.5 12 L13 4.5"/></svg>';
+  }
+  var PENCIL_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>';
+  var TRASH_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>';
+
+  function renderList(){
+    var key = fmtKey(viewDate);
+    var html = "";
+    state.habits.forEach(function(h){
+      var done = isDone(h.id, key);
+      html += '<li class="habit' + (done ? " done" : "") + '" data-id="' + h.id + '">'
+            +   '<span class="habit-emoji">' + esc(h.emoji || "✨") + '</span>'
+            +   '<span class="habit-name">' + esc(h.name) + '</span>'
+            +   '<span class="check' + (done ? " on" : "") + '" aria-hidden="true">' + checkSvg() + '</span>'
+            +   '<span class="row-actions">'
+            +     '<button class="icon-btn" data-act="rename" title="重命名" aria-label="重命名">' + PENCIL_SVG + '</button>'
+            +     '<button class="icon-btn danger" data-act="delete" title="删除" aria-label="删除">' + TRASH_SVG + '</button>'
+            +   '</span>'
+            + '</li>';
+    });
+    habitList.innerHTML = html;
+  }
+
+  function renderHistory(){
+    var t = today();
+    var cells = "";
+    for(var i=6; i>=0; i--){
+      var d = addDays(t, -i);
+      var key = fmtKey(d);
+      var isT = i === 0;
+      var isView = fmtKey(viewDate) === key;
+      var count = doneIds(key).length;
+      var all = state.habits.length > 0 && count === state.habits.length;
+      cells += '<button class="day' + (isT ? " today" : "") + (isView ? " active" : "") + '" data-key="' + key + '">'
+             +   '<span class="day-week">' + (isT ? "今天" : weekdayCN(d).slice(1)) + '</span>'
+             +   '<span class="day-num">' + d.getDate() + '</span>'
+             +   '<span class="day-count' + (count ? (all ? " all" : " on") : "") + '">' + count + '</span>'
+             + '</button>';
+    }
+    historyStrip.innerHTML = cells;
+  }
+
+  /* ---------- modal ---------- */
+  var modalMode = "add";      // add | edit
+  var editId = null;
+  var selEmoji = EMOJIS[0];
+
+  function buildEmojiGrid(){
+    var html = "";
+    EMOJIS.forEach(function(e){
+      html += '<button class="emoji-btn' + (e === selEmoji ? " sel" : "") + '" data-emoji="' + e + '" type="button">' + e + '</button>';
+    });
+    emojiGrid.innerHTML = html;
+  }
+  emojiGrid.addEventListener("click", function(ev){
+    var b = ev.target.closest(".emoji-btn");
+    if(!b) return;
+    selEmoji = b.getAttribute("data-emoji");
+    Array.prototype.forEach.call(emojiGrid.children, function(c){ c.classList.remove("sel"); });
+    b.classList.add("sel");
+  });
+
+  function openModal(mode, id){
+    modalMode = mode;
+    editId = id || null;
+    var habit = editId ? state.habits.filter(function(h){ return h.id === editId; })[0] : null;
+    modalTitle.textContent = editId ? "编辑习惯" : "添加习惯";
+    habitName.value = habit ? habit.name : "";
+    selEmoji = habit ? (habit.emoji || EMOJIS[0]) : EMOJIS[0];
+    if(EMOJIS.indexOf(selEmoji) === -1) selEmoji = EMOJIS[0];
+    buildEmojiGrid();
+    modalBackdrop.classList.add("show");
+    setTimeout(function(){ habitName.focus(); }, 60);
+  }
+  function closeModal(){ modalBackdrop.classList.remove("show"); }
+
+  modalOk.addEventListener("click", function(){
+    var name = habitName.value.trim();
+    if(!name){ habitName.focus(); habitName.style.borderColor = "var(--brick)"; return; }
+    habitName.style.borderColor = "";
+    if(modalMode === "edit" && editId){
+      var h = state.habits.filter(function(x){ return x.id === editId; })[0];
+      if(h){ h.name = name; h.emoji = selEmoji; }
+    }else{
+      state.habits.push({ id: uid(), name: name, emoji: selEmoji, createdAt: new Date().toISOString() });
+    }
+    save(); closeModal(); render();
+  });
+  modalCancel.addEventListener("click", closeModal);
+  modalBackdrop.addEventListener("click", function(ev){ if(ev.target === modalBackdrop) closeModal(); });
+  document.addEventListener("keydown", function(ev){ if(ev.key === "Escape") closeModal(); });
+  habitName.addEventListener("keydown", function(ev){ if(ev.key === "Enter") modalOk.click(); });
+
+  /* ---------- list interactions (delegation) ---------- */
+  habitList.addEventListener("click", function(ev){
+    var actBtn = ev.target.closest("[data-act]");
+    var row = ev.target.closest(".habit");
+    if(!row) return;
+    var id = row.getAttribute("data-id");
+    if(actBtn){
+      var act = actBtn.getAttribute("data-act");
+      if(act === "rename"){ openModal("edit", id); }
+      else if(act === "delete"){
+        var h = state.habits.filter(function(x){ return x.id === id; })[0];
+        if(!h) return;
+        if(confirm("删除「" + h.name + "」？它的历史打卡记录也会一并清除。")){
+          state.habits = state.habits.filter(function(x){ return x.id !== id; });
+          for(var k in state.checkins){
+            var idx = state.checkins[k].indexOf(id);
+            if(idx !== -1){ state.checkins[k].splice(idx, 1); if(!state.checkins[k].length) delete state.checkins[k]; }
+          }
+          save(); render();
+        }
+      }
+      return;
+    }
+    setDone(id, fmtKey(viewDate), !isDone(id, fmtKey(viewDate)));
+    render();
+  });
+
+  /* ---------- history strip (delegation) ---------- */
+  historyStrip.addEventListener("click", function(ev){
+    var day = ev.target.closest(".day");
+    if(!day) return;
+    viewDate = parseKey(day.getAttribute("data-key"));
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  /* ---------- top actions ---------- */
+  $("addBtn").addEventListener("click", function(){ openModal("add"); });
+  backToday.addEventListener("click", function(){ viewDate = today(); render(); });
+
+  /* ---------- init ---------- */
+  ringFill.style.strokeDasharray = RING_C;
+  render();
+})();
+</script>
+</body>
+</html>
